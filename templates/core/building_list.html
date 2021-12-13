@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <table id="data_visulization" class="table table-striped" style="width:100%">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th>Building Name</th>
+                <th>Id</th>
+                <th>Chart</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for building in buildings %}
+            <tr>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ building.name }}</td>
+                <td>{{ building.id }}</td>
+                <td><a class="btn btn-primary btn-sml" href="{% url 'visualization' resource_id=resource_id building_id=building.id %}"> show data </a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <h1>Upload Files</h1>
+        <form action="{% url 'data_collection' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="card">
+            <div class="card-body">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Resource</th>
+                      <th scope="col">Uploaded At</th>
+                      <th scope="col">Chart View</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {% for resource in resource_qs %}
+                    <tr>
+                      <th scope="row">{{ forloop.counter }}</th>
+                      <td>{{resource}}</td>
+                      <td>{{resource.created_at}}</td>
+                      <td><a href="{% url 'building_list' resource.id %}" class="btn btn-primary btn-sm">View</a></td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

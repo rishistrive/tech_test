@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load js %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+
+{% for unit in units %}
+    <div class="col-md-12 my-3">
+
+    <div class="card">
+      <div class="card-body">
+        <div>
+          <p>
+            <strong>{{unit.fuel}}</strong>
+          </p>
+          <label for="chart_datepicker mx-2">
+            Select Week Start: 
+            <input id="chart_datepicker_{{unit.id}}" type="text" class="form-control">
+          </label>  
+          <button class="btn btn-outline-secondary mx-1" onclick="previousData('{{unit.id}}')">Previous 7 days</button>
+          <button class="btn btn-outline-secondary mx-1" onclick="nextData('{{unit.id}}')">Next 7 days</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="{{unit.id}}"></canvas>
+        </div>
+      </div>
+    </div>
+    </div>
+{% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+var resources = JSON.parse({{ resources | js }});
+const colors = [
+  '#6610f2',
+  '#6f42c1',
+  '#d63384',
+  '#dc3545',
+  '#fd7e14',
+  '#ffc107',
+  '#198754',
+  '#20c997',
+  '#0dcaf0',
+  '#6c757d',
+  '#6c757d',
+  '#198754',
+  '#0dcaf0',
+  '#ffc107',
+  '#dc3545',
+]
+var chart = [];
+</script>
+{% for unit in units %}
+  <script>
+  var random_color = colors[Math.floor(Math.random()*colors.length)];
+  var labelArray = resources['{{forloop.counter0}}']['data']['datetime'];
+  var dataArray = resources['{{forloop.counter0}}']['data']['consumption'];
+  var chartData = new Chart(document.getElementById('{{unit.id}}').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: labelArray.slice(0, 336),
+      
+      datasets: [{
+        
+        label:'{{unit.fuel}} | {{unit.unit}}',
+        data: dataArray.slice(0, 336),
+        fill: false,
+        borderColor: random_color,
+        tension: 0.1
+      }],
+    },
+    options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: false,
+              text: '{{unit.fuel}} | {{unit.unit}}'
+            },
+          },
+          interaction: {
+            intersect: false,
+          },
+          scales: {
+            x: {
+              display: true,
+              title: {
+                display: false,
+                text: '{{unit.fuel}} '
+              }
+            },
+            y: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Usage {{unit.unit}}'
+              },
+            }
+          }
+        },
+
+  });
+  chart['{{unit.id}}'] = chartData;
+  var datepicker_id = "#chart_datepicker_{{unit.id}}";
+  $(datepicker_id).datepicker({
+    format: 'yyyy-mm-dd',
+  }).datepicker('setDate', new Date(labelArray[0].split(' ')[0])).on("changeDate", function(e) {
+   var date = e.date;
+   var id = '{{unit.id}}';
+   var selected_date = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+   addData(id, selected_date);
+  });
+
+  </script>
+{% endfor %}
+
+<script>
+
+function getDateIndex(date){
+
+  labelArray.foreach((val, key) => {
+    if (val === date) {
+      return key;
+    }
+  })
+
+}
+
+// Randomize data button function
+function addData(id, date) {
+  let data = []
+  let label = []
+  resources.map(res => {
+    if(res.meter_id == id) {
+      label = res.data.datetime;
+      data = res.data.consumption;
+    }
+  })
+
+  var label_index_array = [];
+  
+  label.forEach((val, key) => {
+    if (val.split(' ')[0] === date) {
+      label_index_array.push(key);
+    }
+  })
+  label_index = label_index_array[0];
+  let myData = chart[id];
+  let newData = data.slice(label_index, label_index+336)
+  let newLabel = label.slice(label_index, label_index+336)
+  myData.data.datasets[0].data = newData;
+  myData.config.data.labels  = newLabel;
+  myData.update();
+};
+
+// previous data button function
+function previousData(id) {
+  let data = []
+  let label = []
+  resources.map(res => {
+    if(res.meter_id == id) {
+      label = res.data.datetime;
+      data = res.data.consumption;
+    }
+  })
+
+  var datepicker_id = '#chart_datepicker_' + id;
+  var chart_datepicker = $(datepicker_id);
+  var date = chart_datepicker.val();
+  var label_index = '';
+  var label_index_array = [];
+  label.forEach((val, key) => {
+    if (val.split(' ')[0] === date) {
+      label_index_array.push(key);
+    }
+  })
+
+  var new_datetime = new Date(date);
+  var new_date = new Date(new_datetime.setDate(new_datetime.getDate() - 7));
+  chart_datepicker.datepicker('setDate', new_date);
+
+  label_index = label_index_array[0];
+  let myData = chart[id];
+  let newData = data.slice(label_index, label_index+336)
+  let newLabel = label.slice(label_index, label_index+336)
+  myData.data.datasets[0].data = newData;
+  myData.config.data.labels  = newLabel;
+  myData.update();
+};
+
+// Randomize data button function
+function nextData(id) {
+  let data = []
+  let label = []
+  resources.map(res => {
+    if(res.meter_id == id) {
+      label = res.data.datetime;
+      data = res.data.consumption;
+    }
+  })
+
+  var datepicker_id = '#chart_datepicker_' + id;
+  var chart_datepicker = $(datepicker_id);
+  var date = chart_datepicker.val();
+  var label_index = '';
+  var label_index_array = [];
+  label.forEach((val, key) => {
+    if (val.split(' ')[0] === date) {
+      label_index_array.push(key);
+    }
+  })
+
+  var new_datetime = new Date(date);
+  var new_date = new Date(new_datetime.setDate(new_datetime.getDate() + 7));
+  chart_datepicker.datepicker('setDate', new_date);
+
+  label_index = label_index_array[0];
+  let myData = chart[id];
+  let newData = data.slice(label_index, label_index+336)
+  let newLabel = label.slice(label_index, label_index+336)
+  myData.data.datasets[0].data = newData;
+  myData.config.data.labels  = newLabel;
+  myData.update();
+};
+
+</script>
+{% endblock %}
